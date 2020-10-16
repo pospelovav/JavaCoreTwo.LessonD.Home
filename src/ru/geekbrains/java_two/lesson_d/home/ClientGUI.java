@@ -4,18 +4,25 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.PrintStream;
 
 public class ClientGUI extends JFrame implements ActionListener, Thread.UncaughtExceptionHandler {
 
     private static final int WIDTH = 400;
     private static final int HEIGHT = 300;
 
+    private String messageLog = "";
+
+
     private final JTextArea log = new JTextArea();
     private final JPanel panelTop = new JPanel(new GridLayout(2, 3));
     private final JTextField tfIPAddress = new JTextField("127.0.0.1");
     private final JTextField tfPort = new JTextField("8189");
     private final JCheckBox cbAlwaysOnTop = new JCheckBox("Always on top");
-    private final JTextField tfLogin = new JTextField("ivan");
+    private final JTextField tfLogin = new JTextField("Alexsandr");
     private final JPasswordField tfPassword = new JPasswordField("123");
     private final JButton btnLogin = new JButton("Login");
 
@@ -37,7 +44,12 @@ public class ClientGUI extends JFrame implements ActionListener, Thread.Uncaught
                 "user_with_an_exceptionally_long_name_in_this_chat"};
         userList.setListData(users);
         scrollUser.setPreferredSize(new Dimension(100, 0));
+
+        // ActionListeners
         cbAlwaysOnTop.addActionListener(this);
+        btnSend.addActionListener(this);
+        tfMessage.addActionListener(this);
+        //   /ActionListeners
 
         panelTop.add(tfIPAddress);
         panelTop.add(tfPort);
@@ -54,10 +66,13 @@ public class ClientGUI extends JFrame implements ActionListener, Thread.Uncaught
         add(panelTop, BorderLayout.NORTH);
         add(panelBottom, BorderLayout.SOUTH);
 
+        log.setEditable(false);    //запрет редактирования лога
+
         setVisible(true);
     }
 
     public static void main(String[] args) {
+
         SwingUtilities.invokeLater(new Runnable() {
             @Override
             public void run() {
@@ -71,6 +86,17 @@ public class ClientGUI extends JFrame implements ActionListener, Thread.Uncaught
         Object src = e.getSource();
         if (src == cbAlwaysOnTop) {
             setAlwaysOnTop(cbAlwaysOnTop.isSelected());
+        } else if ((src == btnSend) || (src == tfMessage)){
+            //String s = tfMessage.getText();
+            //messageLog += tfLogin.getText() + ": " + tfMessage.getText() + '\n';
+            //log.setText(messageLog);
+            messageLog = tfLogin.getText() + ": " + tfMessage.getText() + '\n';
+            log.append(messageLog);
+            tfMessage.setText("");   // очистка поля ввода после отправки сообщения
+            //log.append();
+            logWriteToFile(messageLog);
+
+
         } else {
             throw new RuntimeException("Unknown action source: " + src);
         }
@@ -87,4 +113,20 @@ public class ClientGUI extends JFrame implements ActionListener, Thread.Uncaught
         JOptionPane.showMessageDialog(this, msg, "Exception", JOptionPane.ERROR_MESSAGE);
         System.exit(1);
     }
+
+
+    private static void logWriteToFile(String messageLog){      //запись в файл лога
+        try {
+            FileOutputStream fos = new FileOutputStream("logFile.txt", true);
+            fos.write(messageLog.getBytes());
+            fos.flush();
+            fos.close();
+        } catch (FileNotFoundException ex) {
+            ex.printStackTrace();
+        } catch (IOException ex) {
+            System.out.println(ex.getMessage());
+        }
+    }
+
+
 }
